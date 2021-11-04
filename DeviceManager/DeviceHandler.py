@@ -386,6 +386,20 @@ class DeviceHandler(object):
         orm_device = assert_device_exists(device_id)
         return serialize_full_device(orm_device, tenant, sensitive_data)
 
+    @staticmethod
+    def validate_device_id(id):
+        """
+        Validates if the device id follows the rules implemented by dojot 
+
+        :param id: The device id
+
+        :raises ValidationError: If the device id violated the rules or is too long
+        """
+        regex = re.compile(r'^[0-9a-fA-F]{2,6}$')
+        if regex.match(id) == None:
+            raise ValidationError('Device ID must be 6 characters and must be hexadecimal (0-9,a-f,A-F).')  
+
+
     @classmethod
     def create_device(cls, params, token):
         """
@@ -432,7 +446,13 @@ class DeviceHandler(object):
                 data_request = params.get('data')
                 device_data, json_payload = parse_payload(content_type, data_request, device_schema)
                 validate_repeated_attrs(json_payload)
-                device_data['id'] = DeviceHandler.generate_device_id()
+
+                if json_payload.get('id', None) is None or count > 1 : 
+                    device_data['id'] = DeviceHandler.generate_device_id()
+                else:
+                    DeviceHandler.validate_device_id(json_payload['id'])
+                    device_data['id'] = json_payload['id']
+
                 device_data['label'] = DeviceHandler.indexed_label(count, c_length, device_data['label'], i)
                 device_data.pop('templates', None)
                 orm_device = Device(**device_data)
