@@ -387,16 +387,16 @@ class DeviceHandler(object):
         return serialize_full_device(orm_device, tenant, sensitive_data)
 
     @staticmethod
-    def validate_device_id(id):
+    def validate_device_id(device_id):
         """
         Validates if the device id follows the rules implemented by dojot 
 
-        :param id: The device id
+        :param device_id: The device id
 
         :raises ValidationError: If the device id violated the rules or is too long
         """
         regex = re.compile(r'^[0-9a-fA-F]{2,6}$')
-        if regex.match(id) == None:
+        if regex.match(device_id) == None:
             raise ValidationError('Device ID must be 6 characters and must be hexadecimal (0-9,a-f,A-F).')  
 
 
