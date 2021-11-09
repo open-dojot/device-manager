@@ -397,7 +397,7 @@ class DeviceHandler(object):
         """
         regex = re.compile(r'^[0-9a-fA-F]{2,6}$')
         if regex.match(device_id) == None:
-            raise ValidationError('Device ID must be 6 characters and must be hexadecimal (0-9,a-f,A-F).')  
+            raise ValidationError('Device ID must be 2-6 characters and must be hexadecimal (0-9,a-f,A-F).')  
 
 
     @classmethod

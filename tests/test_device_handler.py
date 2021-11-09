@@ -250,13 +250,13 @@ class TestDeviceHandler(unittest.TestCase):
         with pytest.raises(ValidationError) as validationError:
             DeviceHandler.validate_device_id('8dp3p1')
         
-        self.assertEqual(validationError.value.messages[0], 'Device ID must be 6 characters and must be hexadecimal (0-9,a-f,A-F).')        
+        self.assertEqual(validationError.value.messages[0], 'Device ID must be 2-6 characters and must be hexadecimal (0-9,a-f,A-F).')        
 
     def test_validate_device_id__should_raise_an_error__when_id_longer_than_6(self):
         with pytest.raises(ValidationError) as validationError:
             DeviceHandler.validate_device_id('8d33f222')
         
-            self.assertEqual(validationError.value.messages[0], 'Device ID must be 6 characters and must be hexadecimal (0-9,a-f,A-F).') 
+            self.assertEqual(validationError.value.messages[0], 'Device ID must be 2-6 characters and must be hexadecimal (0-9,a-f,A-F).') 
 
     @patch('DeviceManager.DeviceHandler.db')
     @patch('flask_sqlalchemy._QueryProperty.__get__')
