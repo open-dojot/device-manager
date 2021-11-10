@@ -563,9 +563,9 @@ All these endpoints are related to CRUD operations over devices.
 
 ## Devices [/device]
 
-### Register a new device [POST /device{?count,verbose}]
+### Register a new device and generate its id [POST /device{?count,verbose}]
 
-Register a new device. In this example, there is already a template (ID 1) which describes all the
+Register a new device and generate its id. In this example, there is already a template (ID 1) which describes all the
 attributes to be applied to this device.
 
 + Parameters
@@ -662,6 +662,107 @@ attributes to be applied to this device.
                 "status": 500
             }
 
+## Devices [/device]
+
+### Register a new single device with the entered id [POST /device{?count,verbose}]
+
+Register a new single device with the entered id. In this example, there is already a template (ID 1) which describes all the
+attributes to be applied to this device.
+
++ Parameters
+    + verbose: False (boolean, optional)
+
+        Set to `True` if full device description is to be returned.
+
++ Request (application/json)
+    + Headers
+
+            Authorization: Bearer JWT
+
+    + Body
+
+            {
+              "label": "test_device",
+              "templates": [1],
+              "id": "68fd31"
+            }
+
++ Response 200 (application/json)
+
+            {
+              "devices": [
+                {
+                  "id": "68fd31",
+                  "label": "test_device"
+                }
+              ],
+              "message": "devices created"
+            }
+
+
++ Response 400 (application/json)
+
+            {
+                "message": "If provided, count must be integer",
+                "status": 400
+            }
+
++ Response 400 (application/json)
+
+            {
+                "message": "Verbose can only be used for single device creation",
+                "status": 400
+            }
+
++ Response 400 (application/json)
+
+            {
+                "message": "Payload must be valid JSON, and Content-Type set accordingly",
+                "status": 400
+            }
+
++ Response 400 (application/json)
+
+            {
+                "errors": {
+                    "label": [
+                        "Missing data for required field."
+                    ]
+                },
+                "message": "failed to parse input"
+            }
+
++ Response 400 (application/json)
+
+            {
+                "message": [
+                    "a device can not have repeated attributes"
+                ],
+                "status": 400
+            }
+
++ Response 400 (application/json)
+
+            {
+                "message": [
+                    "Device ID must be 2-6 characters and must be hexadecimal (0-9,a-f,A-F)"
+                ],
+                "status": 400
+            }
+
++ Response 404 (application/json)
+
+            {
+                "message": "No such template: 1",
+                "status": 404
+            }
+
++ Response 500 (application/json)
+
+            {
+                "message": "Failed to generate unique device_id",
+                "status": 500
+            }
 
 ## Device info [/device/{id}]
 

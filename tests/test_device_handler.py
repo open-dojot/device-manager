@@ -10,6 +10,7 @@ from DeviceManager.DatabaseModels import Device, DeviceAttrsPsk, DeviceAttr
 from DeviceManager.DatabaseModels import assert_device_exists
 from DeviceManager.BackendHandler import KafkaInstanceHandler
 import DeviceManager.DatabaseModels
+from DeviceManager.SerializationModels import ValidationError
 
 from .token_test_generator import generate_token
 
@@ -240,6 +241,23 @@ class TestDeviceHandler(unittest.TestCase):
                         token, 'device_id_src', 'shared_key', 'device_id_dest', 'shared_key')
                     self.assertIsNone(result)
 
+    def test_validate_device_id__should_pass_validation(self):      
+        DeviceHandler.validate_device_id('8d73f1')
+        
+        self.assertTrue(True)
+
+    def test_validate_device_id__should_raise_an_error__when_id_is_invalid(self):
+        with pytest.raises(ValidationError) as validationError:
+            DeviceHandler.validate_device_id('8dp3p1')
+        
+        self.assertEqual(validationError.value.messages[0], 'Device ID must be 2-6 characters and must be hexadecimal (0-9,a-f,A-F).')        
+
+    def test_validate_device_id__should_raise_an_error__when_id_longer_than_6(self):
+        with pytest.raises(ValidationError) as validationError:
+            DeviceHandler.validate_device_id('8d33f222')
+        
+            self.assertEqual(validationError.value.messages[0], 'Device ID must be 2-6 characters and must be hexadecimal (0-9,a-f,A-F).') 
+
     @patch('DeviceManager.DeviceHandler.db')
     @patch('flask_sqlalchemy._QueryProperty.__get__')
     def test_create_device(self, db_mock_session, query_property_getter_mock):
@@ -251,38 +269,41 @@ class TestDeviceHandler(unittest.TestCase):
         with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
             mock_device_id.return_value = 'test_device_id'
 
-            with patch.object(KafkaInstanceHandler, "getInstance", return_value=MagicMock()):
+            with patch('DeviceManager.DeviceHandler.DeviceHandler.validate_device_id') as mock_validate_device_id:
+                mock_validate_device_id.return_value = True
 
-                params = {'count': '1', 'verbose': 'false',
-                          'content_type': 'application/json', 'data': data}
-                result = DeviceHandler.create_device(params, token)
+                with patch.object(KafkaInstanceHandler, "getInstance", return_value=MagicMock()):
 
-                self.assertIsNotNone(result)
-                self.assertTrue(result['devices'])
-                self.assertEqual(result['message'], 'devices created')
-                self.assertEqual(result['devices'][0]['id'], 'test_device_id')
-                self.assertEqual(result['devices'][0]['label'], 'test_device')
-
-                params = {'count': '1', 'verbose': 'true',
-                          'content_type': 'application/json', 'data': data}
-                result = DeviceHandler.create_device(params, token)
-                self.assertIsNotNone(result)
-                self.assertTrue(result['devices'])
-                self.assertEqual(result['message'], 'device created')
-
-                # Here contains the validation when the count is not a number
-                params = {'count': 'is_not_a_number', 'verbose': 'false',
-                          'content_type': 'application/json', 'data': data}
-
-                with self.assertRaises(HTTPRequestError):
+                    params = {'count': '1', 'verbose': 'false',
+                            'content_type': 'application/json', 'data': data}
                     result = DeviceHandler.create_device(params, token)
 
-                # Here contains the HttpRequestError validating de count with verbose
-                params = {'count': '2', 'verbose': 'true',
-                          'content_type': 'application/json', 'data': data}
+                    self.assertIsNotNone(result)
+                    self.assertTrue(result['devices'])
+                    self.assertEqual(result['message'], 'devices created')
+                    self.assertEqual(result['devices'][0]['id'], 'test_device_id')
+                    self.assertEqual(result['devices'][0]['label'], 'test_device')
 
-                with self.assertRaises(HTTPRequestError):
+                    params = {'count': '1', 'verbose': 'true',
+                            'content_type': 'application/json', 'data': data}
                     result = DeviceHandler.create_device(params, token)
+                    self.assertIsNotNone(result)
+                    self.assertTrue(result['devices'])
+                    self.assertEqual(result['message'], 'device created')
+
+                    # Here contains the validation when the count is not a number
+                    params = {'count': 'is_not_a_number', 'verbose': 'false',
+                            'content_type': 'application/json', 'data': data}
+
+                    with self.assertRaises(HTTPRequestError):
+                        result = DeviceHandler.create_device(params, token)
+
+                    # Here contains the HttpRequestError validating de count with verbose
+                    params = {'count': '2', 'verbose': 'true',
+                            'content_type': 'application/json', 'data': data}
+
+                    with self.assertRaises(HTTPRequestError):
+                        result = DeviceHandler.create_device(params, token)
 
     @patch('DeviceManager.DeviceHandler.db')
     @patch('flask_sqlalchemy._QueryProperty.__get__')

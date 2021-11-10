@@ -140,7 +140,8 @@ def register_new_template(transaction):
 
 
 @hooks.before('Devices > Device info > Update device info')
-@hooks.before('Devices > Devices > Register a new device')
+@hooks.before('Devices > Devices > Register a new device and generate its id')
+@hooks.before('Devices >  > Register a new single device with the entered id')
 def register_new_device(transaction):
     template_id = create_sample_template()
     if not 'proprietary' in transaction:
